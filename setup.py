@@ -5,7 +5,7 @@ import sys
 class install_with_kernelspec(install):
     def run(self):
         install.run(self)
-        from IPython.kernel.kernelspec import install_kernel_spec
+        from jupyter_client.kernelspec import install_kernel_spec
         install_kernel_spec('kernelspec', 'forth', replace=True)
 
 with open('README.md') as f:
@@ -17,7 +17,7 @@ if svem_flag in sys.argv:
     sys.argv.remove(svem_flag)
 
 setup(name='forth_kernel',
-      version='0.1',
+      version='0.2',
       description='A Forth kernel for IPython',
       long_description=readme,
       author='Jonathan Frederic',
