@@ -11,7 +11,6 @@ try:
     from Queue import Queue, Empty
 except ImportError:
     from queue import Queue, Empty  # python 3.x
-#from queue import Queue, Empty  # python 3.x
 
 __version__ = '0.2'
 __path__ = os.environ.get('GFORTHPATH')
@@ -45,12 +44,11 @@ class ForthKernel(Kernel):
         ON_POSIX = 'posix' in sys.builtin_module_names
 
         def enqueue_output(out, queue):
-            #self.answer('Running enqueue_output\n')
             for line in iter(out.readline, b''):
                 queue.put(line)
             out.close()
         
-        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, bufsize=10, close_fds=ON_POSIX)
+        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, bufsize=2, close_fds=ON_POSIX)
         self._gforth_queue = Queue()
 
         t = Thread(target=enqueue_output, args=(self._gforth.stdout, self._gforth_queue))
@@ -84,10 +82,7 @@ class ForthKernel(Kernel):
 
         if self._gforth_queue.qsize():
             output = self.get_queue(self._gforth_queue)
-        suffix = '\nCR\n'
-        if '\n' in code and code.index('\n') < len(code):
-            suffix = '\n'
-        code = code.encode('ascii') + suffix.encode('ascii')
+        code = code.encode('ascii') + '\n'.encode('ascii')
         self._gforth.stdin.write(code)
         output = self.get_queue(self._gforth_queue)
 
