@@ -82,7 +82,7 @@ class ForthKernel(Kernel):
 
         if self._gforth_queue.qsize():
             output = self.get_queue(self._gforth_queue)
-        code = code.encode('ascii') + '\n'.encode('ascii')
+        code = code.encode('utf-8') + '\n'.encode('utf-8')
         self._gforth.stdin.write(code)
         output = self.get_queue(self._gforth_queue)
 
