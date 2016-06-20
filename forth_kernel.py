@@ -73,7 +73,10 @@ class ForthKernel(Kernel):
                     time.sleep(0.01)
                     timeout -= 0.01
             else:
-                output += line.decode()
+                try:
+                    output += line.decode()
+                except UnicodeDecodeError:
+                    output += line.decode('latin-1')
                 timeout = 0.
         return output + '\n'
 
