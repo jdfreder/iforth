@@ -63,7 +63,7 @@ class ForthKernel(Kernel):
     def get_queue(self, queue):
         output = ''
         line = '.'
-        timeout = 5.
+        timeout = 3.
         while len(line) or timeout > 0.:
             try:
                 line = queue.get_nowait()
