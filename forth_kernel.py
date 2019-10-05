@@ -1,8 +1,7 @@
-from IPython.kernel.zmq.kernelbase import Kernel
+from ipykernel.kernelbase import Kernel
 
-import signal
 from subprocess import check_output, PIPE, Popen
-from threading  import Thread
+from threading import Thread
 import re
 import os
 import sys
@@ -13,12 +12,14 @@ try:
 except ImportError:
     from queue import Queue, Empty  # python 3.x
 
-__version__ = '0.1'
+__version__ = '0.2'
+__path__ = os.environ.get('GFORTHPATH')
 
 class ForthKernel(Kernel):
     implementation = 'forth_kernel'
     implementation_version = __version__
     language = 'forth'
+    first_command = True
 
     @property
     def language_version(self):
@@ -30,58 +31,69 @@ class ForthKernel(Kernel):
         if self._banner is None:
             self._banner = check_output(['gforth', '--version']).decode('utf-8')
         return self._banner
-    
+
+    language_info = {
+        'name': 'forth_kernel',
+        'version': '0.2',
+        'mimetype': 'text',
+        'file_extension': '.4th'
+	}
+
     def __init__(self, **kwargs):
         Kernel.__init__(self, **kwargs)
-        # TODO: Launch gforth
         ON_POSIX = 'posix' in sys.builtin_module_names
 
         def enqueue_output(out, queue):
             for line in iter(out.readline, b''):
                 queue.put(line)
             out.close()
+        
+        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, bufsize=2, close_fds=ON_POSIX)
+        self._gforth_queue = Queue()
 
-        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, bufsize=1, close_fds=ON_POSIX)
-
-        self._gforth_que = Queue()
-        t = Thread(target=enqueue_output, args=(self._gforth.stdout, self._gforth_que))
-        t.daemon = True # thread dies with the program
+        t = Thread(target=enqueue_output, args=(self._gforth.stdout, self._gforth_queue))
+        t.daemon = True
         t.start()
 
 
-    def do_execute(self, code, silent, store_history=True, user_expressions=None,
-                   allow_stdin=False):
-        # Make sure we have code.
-        code = code.strip()
-        if not code:
-            return {'status': 'ok', 'execution_count': self.execution_count,
-                    'payload': [], 'user_expressions': {}}
+    def answer(self, output):
+        stream_content = {'name': 'stdout', 'text': output}
+        self.send_response(self.iopub_socket, 'stream', stream_content)
 
-        # Try running code...
-        while not self._gforth_que.empty():
-            line = self._gforth_que.get_nowait()
-        self._gforth.stdin.write(code + '\n')
-        # read line without blocking
+    def get_queue(self, queue):
         output = ''
         line = '.'
         timeout = 3.
-        while len(line) > 0 or timeout > 0.:
-            try:  
-                line = self._gforth_que.get_nowait() # or q.get(timeout=.1)
+        while len(line) or timeout > 0.:
+            try:
+                line = queue.get_nowait()
             except Empty:
                 line = ''
                 if timeout > 0.:
                     time.sleep(0.01)
                     timeout -= 0.01
-            else: # got line
-                output += line + '\n'
+            else:
+                try:
+                    output += line.decode()
+                except UnicodeDecodeError:
+                    output += line.decode('latin-1')
                 timeout = 0.
+        return output + '\n'
+
+
+    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
+
+        if self._gforth_queue.qsize():
+            output = self.get_queue(self._gforth_queue)
+        code = code.encode('utf-8') + '\n'.encode('utf-8')
+        self._gforth.stdin.write(code)
+        output = self.get_queue(self._gforth_queue)
 
         # Return results.
         if not silent:
-            stream_content = {'name': 'stdout', 'data': output}
-            self.send_response(self.iopub_socket, 'stream', stream_content)
-        
+            output = 'None' if not output else output
+            self.answer(output)
+
         # Barf or return ok.
         if False:
             return {'status': 'error', 'execution_count': self.execution_count,
@@ -89,7 +101,7 @@ class ForthKernel(Kernel):
         else:
             return {'status': 'ok', 'execution_count': self.execution_count,
                     'payload': [], 'user_expressions': {}}
-
+    
 if __name__ == '__main__':
-    from IPython.kernel.zmq.kernelapp import IPKernelApp
+    from ipykernel.kernelapp import IPKernelApp
     IPKernelApp.launch_instance(kernel_class=ForthKernel)
