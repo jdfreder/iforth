@@ -1,3 +1,6 @@
+# Jupyter Notebook - for testing purposes
+*.ipynb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
