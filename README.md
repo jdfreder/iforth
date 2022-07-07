@@ -8,7 +8,13 @@ Forth kernel for the Jupyter / IPython notebook.  Requires IPython 3.x (master a
    One sure way to avoid having to use `sudo` is to activate a virtual environment in your home directory (or wherever you have write access to).
 
 ### Development Installation
-Do an [editable `pip` install](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs) - do `pip install -e .` (instead of `pip install .`)
+Do an [editable `pip` install](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs) in this repository's folder:
+```bash
+pip install -e .
+jupyter kernelspec install ./kernelspec    
+```
+
+**Note:** `jupyter kernelspec install` is required here, because unlike in normal install, the kernel does NOT automatically show in `jupyter kernelspec list`.
 
 ## Usage
 - Run `jupyter notebook` (or `ipython notebook`, whichever you prefer).
