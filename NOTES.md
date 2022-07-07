@@ -1,4 +1,7 @@
 # Notes
+- Difficult to test on Windows, because I can't find an easy way to install `gforth` on Windows - 
+  installing from source is too much work 🤷!
+     - Will have to try to run in WSL...
 
 ## What files are actually installed?
 [How to uninstall after `python setup.py install`](https://stackoverflow.com/a/1550235/12947681)
