@@ -2,6 +2,7 @@ from ipykernel.kernelbase import Kernel
 
 from subprocess import check_output, PIPE, Popen
 from threading import Thread
+from functools import cached_property
 import re
 import os
 import sys
@@ -25,12 +26,9 @@ class ForthKernel(Kernel):
     def language_version(self):
         return self.banner.split(' ')[-1]
 
-    _banner = None
-    @property
+    @cached_property
     def banner(self):
-        if self._banner is None:
-            self._banner = check_output(['gforth', '--version']).decode('utf-8')
-        return self._banner
+        return check_output(['gforth', '--version']).decode('utf-8')
 
     language_info = {
         'name': 'forth_kernel',
