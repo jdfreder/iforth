@@ -1,6 +1,7 @@
 from distutils.core import setup
 from distutils.command.install import install
 import sys
+import shutil
 
 class install_with_kernelspec(install):
     def run(self):
@@ -33,3 +34,6 @@ setup(name='forth_kernel',
           'Topic :: System :: Shells',
       ]
 )
+
+if shutil.which('gforth') is None:
+    print('WARNING: gforth not found on Environment PATH. Please install gforth.')

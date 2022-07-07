@@ -104,4 +104,7 @@ class ForthKernel(Kernel):
     
 if __name__ == '__main__':
     from ipykernel.kernelapp import IPKernelApp
+    import shutil 
+
+    assert shutil.which('gforth') is not None, 'Program gforth not found. Please install it and ensure it is on your Environment PATH.'
     IPKernelApp.launch_instance(kernel_class=ForthKernel)
