@@ -1,5 +1,6 @@
 from ipykernel.kernelbase import Kernel
 
+from typing import Any, Dict
 from subprocess import check_output, PIPE, Popen
 from threading import Thread
 from functools import cached_property
@@ -23,11 +24,11 @@ class ForthKernel(Kernel):
     first_command = True
 
     @property
-    def language_version(self):
+    def language_version(self) -> str:
         return self.banner.split(' ')[-1]
 
     @cached_property
-    def banner(self):
+    def banner(self) -> str:
         return check_output(['gforth', '--version']).decode('utf-8')
 
     language_info = {
@@ -79,7 +80,7 @@ class ForthKernel(Kernel):
         return output + '\n'
 
 
-    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
+    def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False) -> Dict[str, Any]:
 
         if self._gforth_queue.qsize():
             output = self.get_queue(self._gforth_queue)
@@ -89,16 +90,10 @@ class ForthKernel(Kernel):
 
         # Return results.
         if not silent:
-            output = 'None' if not output else output
-            self.answer(output)
+            self.answer(output or 'None')
 
-        # Barf or return ok.
-        if False:
-            return {'status': 'error', 'execution_count': self.execution_count,
-                    'ename': '', 'evalue': str(exitcode), 'traceback': []}
-        else:
-            return {'status': 'ok', 'execution_count': self.execution_count,
-                    'payload': [], 'user_expressions': {}}
+        return {'status': 'ok', 'execution_count': self.execution_count,
+                'payload': [], 'user_expressions': {}}
     
 if __name__ == '__main__':
     from ipykernel.kernelapp import IPKernelApp
