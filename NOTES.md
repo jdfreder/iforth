@@ -1,4 +1,7 @@
 # Notes
+- `gforth` outputs errors & tracebacks in `stderr`, but `forth_kernel.py` is only monitoring `stdout`.    
+  That is why error tracebacks are not shown in Jupyter output cells.
+
 - Difficult to test on Windows, because I can't find an easy way to install `gforth` on Windows - 
   installing from source is too much work 🤷!
      - Will have to try to run in WSL...
