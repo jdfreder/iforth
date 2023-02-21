@@ -47,12 +47,17 @@ class ForthKernel(Kernel):
                 queue.put(line)
             out.close()
         
-        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, bufsize=2, close_fds=ON_POSIX)
-        self._gforth_queue = Queue()
+        self._gforth = Popen('gforth', stdin=PIPE, stdout=PIPE, stderr=PIPE, bufsize=2, close_fds=ON_POSIX)
+        self._gforth_stdout_queue = Queue()
+        self._gforth_stderr_queue = Queue()
 
-        t = Thread(target=enqueue_output, args=(self._gforth.stdout, self._gforth_queue))
-        t.daemon = True
-        t.start()
+        t_stdout = Thread(target=enqueue_output, args=(self._gforth.stdout, self._gforth_stdout_queue))
+        t_stdout.daemon = True
+        t_stdout.start()
+
+        t_stderr = Thread(target=enqueue_output, args=(self._gforth.stderr, self._gforth_stderr_queue))
+        t_stderr.daemon = True
+        t_stderr.start()    
 
 
     def answer(self, output):
@@ -81,16 +86,19 @@ class ForthKernel(Kernel):
 
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False) -> Dict[str, Any]:
-
-        if self._gforth_queue.qsize():
-            output = self.get_queue(self._gforth_queue)
+        if self._gforth_stdout_queue.qsize():
+            output = self.get_queue(self._gforth_stdout_queue)
+        if self._gforth_stderr_queue.qsize():
+            error = self.get_queue(self._gforth_stderr_queue)
         code = code.encode('utf-8') + '\n'.encode('utf-8')
         self._gforth.stdin.write(code)
-        output = self.get_queue(self._gforth_queue)
+        output = self.get_queue(self._gforth_stdout_queue)
+        error = self.get_queue(self._gforth_stderr_queue)
 
         # Return results.
         if not silent:
             self.answer(output or 'None')
+            self.answer(error or 'None')        # TODO: error should be highlighted in some way (maybe red background color)
 
         return {'status': 'ok', 'execution_count': self.execution_count,
                 'payload': [], 'user_expressions': {}}
